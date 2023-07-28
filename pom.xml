@@ -4,12 +4,44 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.leyunone</groupId>
     <artifactId>service-center</artifactId>
+    <packaging>pom</packaging>
     <version>0.0.1-SNAPSHOT</version>
     <name>service-center</name>
     <description>Demo project for Spring Boot</description>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <version>2.3.2.RELEASE</version>
+        <artifactId>spring-boot-starter-parent</artifactId>
+    </parent>
     <properties>
         <java.version>8</java.version>
     </properties>
-
+    <modules>
+        <module>service-center-core</module>
+        <module>service-center-api</module>
+    </modules>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.22</version>
+        </dependency>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>5.8.0.M3</version>
+        </dependency>
+    </dependencies>
+    
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.leyunone</groupId>
+                <artifactId>service-center-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     
 </project>
