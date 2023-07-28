@@ -23,7 +23,7 @@ import java.util.*;
  * :)
  * 邮箱推送服务
  *
- * @Author pengli
+ * @Author leyunone
  * @Date 2023/7/11 11:17
  */
 @DubboService

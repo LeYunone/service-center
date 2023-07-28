@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * :)
  * 处理方枚举
- * @Author pengli
+ * @Author leyunone
  * @Date 2023/7/11 16:26
  */
 public enum SolverEnum implements Serializable {

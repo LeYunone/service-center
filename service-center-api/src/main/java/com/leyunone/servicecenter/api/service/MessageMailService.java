@@ -6,7 +6,7 @@ import com.leyunone.servicecenter.api.dto.MailSendDTO;
 /**
  * :)
  *
- * @Author pengli
+ * @Author leyunone
  * @Date 2023/7/11 15:53
  */
 public interface MessageMailService {
