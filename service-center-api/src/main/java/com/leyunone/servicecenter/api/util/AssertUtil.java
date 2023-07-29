@@ -14,36 +14,36 @@
 //    }
 //
 //    public static void isFalse(boolean condition,String message){
-//        isFalse(condition,new DbShopException(message));
+//        isFalse(condition,new ServiceCenterException(message));
 //    }
 //
 //    public static void isFalse(boolean condition){
-//        isFalse(condition,new DbShopException("system error"));
+//        isFalse(condition,new ServiceCenterException("system error"));
 //    }
 //
-//    public static void isFalse(boolean condition,DbShopException ex){
+//    public static void isFalse(boolean condition,ServiceCenterException ex){
 //        isTrue(!condition,ex);
 //    }
 //
-//    public static void isTrue(boolean condition,DbShopException ex){
+//    public static void isTrue(boolean condition,ServiceCenterException ex){
 //        if(!condition){
 //            throw ex;
 //        }
 //    }
 //
-//    public static void isTrue(boolean condition,String msg) throws DbShopException {
+//    public static void isTrue(boolean condition,String msg) throws ServiceCenterException {
 //        if(!condition){
-//            throw new DbShopException(msg);
+//            throw new ServiceCenterException(msg);
 //        }
 //    }
 //
 //    public static void isTrue(boolean condition){
 //        if(!condition){
-//            throw new DbShopException("系统异常");
+//            throw new ServiceCenterException("系统异常");
 //        }
 //    }
 //
 //    public static void isTrue(String msg){
-//        throw new DbShopException(msg);
+//        throw new ServiceCenterException(msg);
 //    }
 //}

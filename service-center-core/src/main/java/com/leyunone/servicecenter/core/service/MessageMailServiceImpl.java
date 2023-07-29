@@ -2,11 +2,13 @@ package com.leyunone.servicecenter.core.service;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.leyunone.servicecenter.api.dto.MailSendDTO;
 import com.leyunone.servicecenter.api.enums.SolverDataTypeEnum;
 import com.leyunone.servicecenter.api.enums.SolverEnum;
 import com.leyunone.servicecenter.api.service.MessageMailService;
 import com.leyunone.servicecenter.core.manager.MailManager;
+import com.leyunone.servicecenter.core.util.AssertUtil;
 import org.apache.dubbo.config.annotation.DubboService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +38,9 @@ public class MessageMailServiceImpl implements MessageMailService {
     private final Logger logger = LoggerFactory.getLogger(MessageMailServiceImpl.class);
 
     private void checkMail(String subject, String text, String[] tos) {
-//        ValidationUtils.notEmpty(text, new ValidationCode("title be can't null"));
-//        ValidationUtils.notEmpty(subject, new ValidationCode("content be can't null"));
-//        ValidationUtils.notEmpty(Arrays.asList(tos), new ValidationCode("content be can't null"));
+        AssertUtil.isFalse(StrUtil.isBlank(text),"title be can't null");
+        AssertUtil.isFalse(StrUtil.isBlank(subject),"content be can't null");
+        AssertUtil.isFalse(ObjectUtil.isEmpty(tos),"tos be can't null");
     }
 
     @Override

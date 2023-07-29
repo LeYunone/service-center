@@ -69,8 +69,6 @@ public class MailSendDTO implements Serializable {
      * 接收人邮箱地址
      */
     private String[] tos;
-    
-    private SolverEnum solver;
 
 
     /**
