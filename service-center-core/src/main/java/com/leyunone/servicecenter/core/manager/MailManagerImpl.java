@@ -6,16 +6,19 @@ import cn.hutool.core.util.StrUtil;
 import com.leyunone.servicecenter.api.dto.MailFileDTO;
 import com.leyunone.servicecenter.api.dto.MailSendDTO;
 import com.leyunone.servicecenter.api.enums.SolverEnum;
+import com.leyunone.servicecenter.core.manager.CacheManager;
+import com.leyunone.servicecenter.core.manager.MailManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import lombok.Value;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
 
+import javax.annotation.Resource;
 import javax.mail.internet.MimeMessage;
 import java.io.File;
 import java.util.Map;
@@ -31,11 +34,13 @@ public class MailManagerImpl implements MailManager {
 
     private final Logger logger = LoggerFactory.getLogger(MailManagerImpl.class);
 
-//    @Value("${spring.mail.username:1}")
+    @Value("${spring.mail.username}")
     private String from;
 
-    @Autowired
+    @Resource
     private JavaMailSender javaMailSender;
+    @Autowired
+    private CacheManager cacheManager;
 
     /**
      * 简单型发送邮件
@@ -69,9 +74,10 @@ public class MailManagerImpl implements MailManager {
      * @param mailSend
      */
     @Override
-    public void send(MailSendDTO mailSend) {
+    public boolean send(MailSendDTO mailSend) {
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         MimeMessageHelper mimeMessageHelper = null;
+        Integer status = 0;
         try {
             mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
             // 邮件发送来源
@@ -90,38 +96,43 @@ public class MailManagerImpl implements MailManager {
                 mimeMessageHelper.setText(mailSend.getHtml(), true);
             }
             //附件
-            if (ObjectUtil.isNotNull(mailSend.getFiles()) &&
-                    mailSend.getFiles().getCellData() == SolverEnum.NONE &&
-                    CollectionUtil.isNotEmpty(mailSend.getFiles().getMateDate())) {
-                for (MailFileDTO fileDTO : mailSend.getFiles().getMateDate()) {
-                    File file = File.createTempFile("temp",null,null);
+            if (ObjectUtil.isNotNull(mailSend.getAnnexFiles()) &&
+                    mailSend.getAnnexFiles().getCellData() == SolverEnum.NONE &&
+                    CollectionUtil.isNotEmpty(mailSend.getAnnexFiles().getMateDate())) {
+                for (MailFileDTO fileDTO : mailSend.getAnnexFiles().getMateDate()) {
+                    File file = File.createTempFile("temp", null, null);
                     try {
                         FileCopyUtils.copy(fileDTO.getArrays(), file);
                         mimeMessageHelper.addAttachment(fileDTO.getFileName(), file);
-                    }finally {
+                    } finally {
                         file.deleteOnExit();
                     }
                 }
             }
             //行内文件
-            if(ObjectUtil.isNotNull(mailSend.getInLineFiles()) &&
-                    mailSend.getInLineFiles().getCellData() == SolverEnum.NONE && CollectionUtil.isNotEmpty(mailSend.getInLineFiles().getMateDate())){
+            if (ObjectUtil.isNotNull(mailSend.getInLineFiles()) &&
+                    mailSend.getInLineFiles().getCellData() == SolverEnum.NONE &&
+                    CollectionUtil.isNotEmpty(mailSend.getInLineFiles().getMateDate())) {
                 Map<String, byte[]> mateDate = mailSend.getInLineFiles().getMateDate();
-                for(String key : mateDate.keySet()){
-                    File file = File.createTempFile("temp",null,null);
+                for (String key : mateDate.keySet()) {
+                    File file = File.createTempFile("temp", null, null);
                     try {
                         FileCopyUtils.copy(mateDate.get(key), file);
-                        mimeMessageHelper.addInline(key,file);
-                    }finally {
+                        mimeMessageHelper.addInline(key, file);
+                    } finally {
                         file.deleteOnExit();
                     }
                 }
             }
             javaMailSender.send(mimeMessage);
             logger.info("发送邮件[{}]成功", mailSend.getSubject());
+            status = 2;
         } catch (Exception e) {
+            status = 1;
             e.printStackTrace();
             logger.error("邮件发送失败,title[" + mailSend.getSubject() + "]", e);
         }
+        cacheManager.add(mailSend.getMessageId(), status, 6L);
+        return status == 2;
     }
 }

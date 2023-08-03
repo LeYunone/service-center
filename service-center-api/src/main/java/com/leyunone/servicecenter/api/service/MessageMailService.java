@@ -1,6 +1,7 @@
 package com.leyunone.servicecenter.api.service;
 
 
+import com.leyunone.servicecenter.api.bean.DataResponse;
 import com.leyunone.servicecenter.api.dto.MailSendDTO;
 
 /**
@@ -11,7 +12,7 @@ import com.leyunone.servicecenter.api.dto.MailSendDTO;
  */
 public interface MessageMailService {
 
-    boolean sendSimpleMail(String subject, String text, String[] tos);
+    DataResponse<?> sendSimpleMail(String subject, String text, String[] tos);
 
-    boolean sendMail(MailSendDTO sendDTO);
+    DataResponse<?> sendMail(MailSendDTO sendDTO);
 }

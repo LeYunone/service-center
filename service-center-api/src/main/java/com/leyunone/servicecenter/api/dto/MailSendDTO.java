@@ -1,9 +1,11 @@
 package com.leyunone.servicecenter.api.dto;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.leyunone.servicecenter.api.bean.ResponseCell;
+import com.leyunone.servicecenter.api.dto.MailFileDTO;
 import com.leyunone.servicecenter.api.enums.MailHtmlEnum;
 import com.leyunone.servicecenter.api.enums.SolverDataTypeEnum;
 import com.leyunone.servicecenter.api.enums.SolverEnum;
@@ -11,6 +13,7 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.FileCopyUtils;
 
 import java.io.File;
 import java.io.Serializable;
@@ -33,6 +36,8 @@ import java.util.regex.Pattern;
 public class MailSendDTO implements Serializable {
     
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    
+    private String messageId;
 
     /**
      * 邮件主题
@@ -47,7 +52,7 @@ public class MailSendDTO implements Serializable {
     /**
      * 附件路径
      */
-    private ResponseCell<SolverEnum,List<MailFileDTO>> files;
+    private ResponseCell<SolverEnum,List<MailFileDTO>> annexFiles;
 
     /**
      * 内联文件
@@ -90,6 +95,7 @@ public class MailSendDTO implements Serializable {
         this.subject = subject;
         this.text = text;
         this.tos = tos;
+        this.messageId = UUID.fastUUID().toString();
     }
 
     /**
@@ -137,7 +143,7 @@ public class MailSendDTO implements Serializable {
     /**
      * 简单html模板内容
      *
-     * @param html 
+     * @param html
      * @param mailHtmlEnum 简单类型
      */
     private void html(String html, MailHtmlEnum mailHtmlEnum) {
@@ -165,7 +171,7 @@ public class MailSendDTO implements Serializable {
                 break;
         }
     }
-    
+
     public void annexFile(SolverEnum solver,MailFileDTO ... mailFileDTO){
         if(ObjectUtil.isEmpty(mailFileDTO)) return;
         switch (solver) {
@@ -178,34 +184,34 @@ public class MailSendDTO implements Serializable {
             case  INTERNET:
                 break;
         }
-        
-        this.files = ResponseCell.build(solver,CollectionUtil.newArrayList(mailFileDTO));
+
+        this.annexFiles = ResponseCell.build(solver,CollectionUtil.newArrayList(mailFileDTO));
     }
 
     /**
-     * 
+     *
      * @param solver 文件处理方
      * @param classFilePaths 项目内相对路径
      */
     public void annexFile(SolverEnum solver, String ... classFilePaths) {
         if(ObjectUtil.isEmpty(classFilePaths)) return;
+        List<MailFileDTO> toFile = new ArrayList<>();
         try {
             switch (solver) {
                 case NONE:
                     //Dubbo文件传输 - byte[]
-                    List<MailFileDTO> toFile = new ArrayList<>();
                     for(String filePath: classFilePaths){
                         File file = new File(filePath);
+                        MailFileDTO mailFileDTO = new MailFileDTO();
+                        mailFileDTO.setFileName(file.getName());
                         if(!file.exists()){
                             //项目路径名
                             ClassPathResource resource = new ClassPathResource(filePath);
-                            file = resource.getFile();
+                            mailFileDTO.setArrays(FileCopyUtils.copyToByteArray(resource.getInputStream()));
+                        }else{
+                            byte[] bFile = Files.readAllBytes(file.toPath());
+                            mailFileDTO.setArrays(bFile);
                         }
-                        String name = file.getName();
-                        byte[] bFile = Files.readAllBytes(file.toPath());
-                        MailFileDTO mailFileDTO = new MailFileDTO();
-                        mailFileDTO.setArrays(bFile);
-                        mailFileDTO.setFileName(name);
                         toFile.add(mailFileDTO);
                     }
                     this.annexFile(solver,toFile.toArray(new MailFileDTO[]{}));
@@ -224,29 +230,33 @@ public class MailSendDTO implements Serializable {
                     break;
             }
         }catch (Exception e){
-            logger.error("mail file io is fail");
+            e.printStackTrace();
+            logger.error("mail file io is fail , e:");
         }
+        this.annexFiles = ResponseCell.build(solver,toFile);
     }
 
     /**
-     * 
+     *
      * @param solver 文件处理方
      * @param fileMap 系统盘路径/网络资源
      */
     public void inLineFiles(SolverEnum solver,Map<String,String> fileMap) {
         if(CollectionUtil.isEmpty(fileMap)) return;
+        Map<String,byte[]> files = new HashMap<>();
         try {
-            Map<String,byte[]> files = new HashMap<>();
             switch (solver){
                 case NONE:
                     for(String key: fileMap.keySet()){
                         File file = new File(fileMap.get(key));
+                        byte[] bFile = null;
                         if(!file.exists()){
                             //项目路径名
                             ClassPathResource resource = new ClassPathResource(fileMap.get(key));
-                            file = resource.getFile();
+                            bFile = FileCopyUtils.copyToByteArray(resource.getInputStream());
+                        }else{
+                            bFile = Files.readAllBytes(file.toPath());
                         }
-                        byte[] bFile = Files.readAllBytes(file.toPath());
                         files.put(key,bFile);
                     }
                     break;
@@ -262,10 +272,11 @@ public class MailSendDTO implements Serializable {
                 case  INTERNET:
                     break;
             }
-            this.inLineFiles = ResponseCell.build(solver,files);
         }catch (Exception e){
+            e.printStackTrace();
             logger.error("mail file io is fail");
         }
+        this.inLineFiles = ResponseCell.build(solver,files);
     }
 
     private String vmParse(String content, Map<String, Object> kvs) {
@@ -273,7 +284,7 @@ public class MailSendDTO implements Serializable {
         for (String key : kvs.keySet()) {
             reMap.put("${" + key + "}", kvs.get(key));
         }
-        
+
         String pattern = "\\$\\{(.*?)}";
         Pattern p = Pattern.compile(pattern);
         Matcher m = p.matcher(content);

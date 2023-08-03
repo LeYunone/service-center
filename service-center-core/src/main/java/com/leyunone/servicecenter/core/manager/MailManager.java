@@ -23,5 +23,5 @@ public interface MailManager {
      * 自定义类型体发送
      * @param mailSend
      */
-    void send(MailSendDTO mailSend);
+    boolean send(MailSendDTO mailSend);
 }
